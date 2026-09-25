@@ -9,6 +9,8 @@ st.sidebar.success(f"You selected {subject}!")
 question = st.text_input(f"Ask your {subject} doubt:")
 
 if st.button("Get Answer ✨"):
+
+    
     if question:
         st.balloons()
         st.info(f"You asked about {subject}: {question}")
