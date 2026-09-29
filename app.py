@@ -7,49 +7,57 @@ st.sidebar.header("Choose Subject")
 subject = st.sidebar.selectbox("Select Subject 📚", 
     ["Maths", "Science", "English", "Social Science", "Computer Science"])
 
-st.sidebar.success(f"You selected {subject}!")
-
 question = st.text_input(f"Ask your {subject} doubt:")
+q = question.lower() if question else ""
 
 if st.button("Get Answer ✨"):
-    if question:
+    if not question:
+        st.warning("Please type a question!")
+    else:
         st.balloons()
         st.info(f"You asked about {subject}: {question}")
-        q = question.lower()
+        st.subheader("Here is the answer 💡")
 
-        if subject == "Maths":
-            if "pythagoras" in q:
-                st.subheader("Here is the answer 💡")
-                st.write("**Pythagoras Theorem:** a² + b² = c²")
-                st.write("Example: a=3, b=4 => c=5")
+        if subject == "Computer Science":
+            if "computer" in q and "define" in q:
+                st.write("**Definition of Computer:**")
+                st.write("A Computer is an electronic device that takes input, processes data, and gives output.")
+                st.write("**Characteristics:** Speed, Accuracy, Storage, Automation")
+                st.write("**Example:** Your laptop takes keyboard input and shows output on screen.")
+                st.write("**Formula/Parts:** Input -> Process (CPU) -> Output, IPO cycle")
+            elif "python" in q or "loop" in q:
+                st.write("**Python Loop:** Used to repeat code.")
+                st.code("for i in range(5):\n    print(i)  # 0,1,2,3,4")
+            elif "ai" in q:
+                st.write("**AI (Artificial Intelligence):** Making computers think like humans. Eg: ChatGPT, EduGeni")
             else:
-                st.write(f"**Answer for {question}:** Practice with examples da!")
+                st.write(f"**{question}:** In Computer Science, this means understanding how hardware and software work together with a real example.")
 
         elif subject == "Science":
-            if "newton" in q and "3" in q:
-                st.subheader("Here is the answer 💡")
-                st.write("**Newton's 3rd Law:** Every action has equal opposite reaction.")
-                st.write("Example: Rocket launch, Boat jump")
-                st.write("Formula: F_action = -F_reaction")
-            elif "newton" in q:
-                st.write("**Newton's Laws:** 1st - rest/motion, 2nd - F=ma, 3rd - action-reaction")
+            if "newton" in q:
+                if "3" in q or "third" in q:
+                    st.write("**Newton's 3rd Law:** Every action has equal and opposite reaction.")
+                    st.write("Example: Rocket pushes gas down, gas pushes rocket up. F_action = -F_reaction")
+                elif "1" in q: st.write("**1st Law:** Object stays at rest/motion unless force acts. Eg: Book on table.")
+                elif "2" in q: st.write("**2nd Law:** F = m x a. Eg: 5kg box with 10N => 2 m/s²")
+                else: st.write("**Newton's 3 Laws:** 1) Inertia, 2) F=ma, 3) Action-Reaction")
             elif "photosynthesis" in q:
-                st.write("**Photosynthesis:** 6CO2+6H2O+Sunlight -> Food + O2")
+                st.write("**Photosynthesis:** Plants make food using sunlight.")
+                st.write("Equation: 6CO2 + 6H2O + Sunlight -> C6H12O6 + 6O2")
             else:
-                st.write(f"**Answer for {question}:** Science example from daily life da!")
+                st.write(f"**{question}:** This is a Science concept. Learn it with a daily life example - like kitchen, cycle, plants!")
+
+        elif subject == "Maths":
+            if "pythagoras" in q: st.write("**Pythagoras:** a²+b²=c². Eg: 3²+4²=5²")
+            elif "algebra" in q: st.write("**Algebra:** Finding unknown. x+2=5 => x=3")
+            else: st.write(f"**{question}:** Solve with 2-3 examples step by step da!")
 
         elif subject == "English":
-            st.write(f"**Answer for {question}:** Story maathiri padicha easy da!")
+            if "tenses" in q: st.write("**Tenses:** Present - I eat, Past - I ate, Future - I will eat")
+            else: st.write(f"**{question}:** Learn this with story and example sentences!")
 
-        elif subject == "Social Science":
-            st.write(f"**Answer for {question}:** Map + Timeline vechu padicha 100% mark!")
+        else: # Social
+            if "revolution" in q: st.write("**French Revolution 1789:** Liberty, Equality, Fraternity")
+            else: st.write(f"**{question}:** Remember with Map + Year + Story!")
 
-        else:
-            if "python" in q:
-                st.write("**Python Loop:** for i in range(5): print(i)")
-            else:
-                st.write(f"**Answer for {question}:** Code + example paathu purinjikka laam!")
-
-        st.success("Tip: Write in notebook 2 times!✨")
-    else:
-        st.warning("Please type a question!")
+        st.success("Tip: Write this in notebook 2 times! ✨")
