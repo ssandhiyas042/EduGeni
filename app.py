@@ -1,79 +1,85 @@
 import streamlit as st
+import requests
 
-st.set_page_config(page_title="EduGeni for Students", page_icon="📚")
+st.set_page_config(page_title="EduGeni for Students", page_icon="📚", layout="centered")
 st.title("EduGeni - For Students 👩‍🎓")
-st.write("Hello Students! I am your teacher. Ask any doubt, I will explain clearly!")
+st.write("Hello Students! I am your teacher. Ask any doubt from 5 subjects, I will explain clearly!")
 
 subject = st.sidebar.selectbox("Choose Your Subject 📚",
     ["Maths", "Science", "English", "Social Science", "Computer Science"])
 
+st.sidebar.info(f"Subject: {subject}\n\nAsk any question, you will get Definition!")
+
 question = st.text_input(f"Ask your {subject} doubt here:")
+
+# Function to get real definition from Wikipedia
+def get_wiki_def(topic):
+    try:
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic.replace(' ', '_')}"
+        headers = {"User-Agent": "EduGeniApp/1.0"}
+        r = requests.get(url, headers=headers, timeout=5)
+        data = r.json()
+        if "extract" in data and data["extract"]:
+            return data["extract"]
+    except:
+        return None
+    return None
+
+# Local strong knowledge for important topics
+local_db = {
+    "types of noun": "**Noun - 5 Types:** 1) Proper Noun (specific name - Ram, Delhi) 2) Common Noun (general - boy, city) 3) Collective Noun (group - team, family) 4) Abstract Noun (feeling - honesty, love) 5) Material Noun (material - gold, water). Example: Ram is a boy with honesty.",
+    "noun": "**Noun:** Naming word. Name of person, place, animal, thing. Types: Proper, Common, Collective, Abstract, Material.",
+    "verb": "**Verb:** Action word. Eg: eat, sleep, run, write. Types: Main verb, Helping verb (is, am, are, was, were).",
+    "tense": "**Tense:** Tells time of action. 3 types: Present (I eat), Past (I ate), Future (I will eat). Each has Simple, Continuous, Perfect, Perfect Continuous.",
+    "photosynthesis": "**Photosynthesis:** Process where green plants make food using Sunlight, CO2, Water. Formula: CO2 + Water + Sunlight -> Glucose + Oxygen. Happens in chloroplast of leaf.",
+    "python": "**Python:** High-level easy programming language invented by Guido van Rossum. Used in YouTube, Instagram, AI. Code: print('Hello')",
+}
 
 if st.button("Get Answer From Teacher 👩‍🏫"):
     if not question:
-        st.warning("Please enter your question dear student!")
+        st.warning("Please enter a question!")
     else:
         st.balloons()
-        q = question.lower()
+        q_low = question.lower().strip()
         st.subheader(f"Okay class, let's learn {question} in {subject}!")
 
-        if subject == "Computer Science":
-            if "python" in q:
-                st.write("**1. Definition:** Python is a high-level programming language, easy to learn.")
-                st.write("**2. Explanation:** Children, Python is like English for computers. We use it to tell computer what to do. It was created by Guido van Rossum.")
-                st.write("**3. Example:**")
-                st.code('print("Hello Students")\nname = "Sandhiya"\nprint(name)')
-                st.write("**4. Where it is used:** YouTube, Instagram, Google and even AI like me are made with Python.")
-                st.write("**5. Exam Tip:** Write this code 2 times, you will get full marks!")
-            
-            elif "loop" in q:
-                st.write("**1. Definition:** Loop means repeating same work again and again.")
-                st.write("**2. Explanation:** Imagine you have to write your name 10 times. Loop will do it in 1 line, instead of 10 lines!")
-                st.write("**3. Example:**")
-                st.code("for i in range(5):\n    print('I will study daily')")
-                st.write("**4. Types:** For Loop (when you know count), While Loop (when you don't know count)")
-                st.write("**5. Exam Tip:** Draw flowchart for loop in exam!")
-            
-            elif "computer" in q:
-                st.write("**1. Definition:** Computer is an electronic device that takes Input, Processes data and gives Output.")
-                st.write("**2. Explanation:** See children, when you press A on keyboard (Input), CPU thinks (Process), A comes on screen (Output). This is IPO cycle.")
-                st.write("**3. Example:** Laptop, Mobile phone are computers.")
-                st.write("**4. Parts:** Input Unit, CPU, Memory, Output Unit")
-                st.write("**5. Exam Tip:** Draw IPO diagram for 2 marks!")
-            
+        answer_found = None
+
+        # 1. Check local db first
+        for key in local_db:
+            if key in q_low or q_low in key:
+                answer_found = local_db[key]
+                break
+
+        # 2. If not in local, get from Wikipedia
+        if not answer_found:
+            wiki = get_wiki_def(question)
+            if wiki:
+                answer_found = wiki
             else:
-                st.write(f"**1. Definition:** {question} is an important concept in Computer Science.")
-                st.write(f"**2. Explanation:** Children, {question} helps computer to do work faster. It is like brain for computer.")
-                st.write(f"**3. Example:** {question} is used in real apps like WhatsApp, Google, Games.")
-                st.write(f"**4. How to Learn:** Write small code for {question} and run it.")
-                st.write(f"**5. Exam Tip:** This is 5 marks question, practice well!")
+                answer_found = f"{question} is a very important concept in {subject}. It is widely used and very important for exams."
 
+        st.write(f"**1. Definition:** {answer_found}")
+
+        # Teacher style explanation for all 5 subjects
+        if subject == "Computer Science":
+            st.write(f"**2. Explanation:** Children, {question} helps computer to work smarter. It is like brain for computer.")
+            st.write(f"**3. Example Code:** Try small program for {question} and run it.")
         elif subject == "Science":
-            st.write(f"**1. Definition:** {question} is an important topic in Science.")
-            st.write(f"**2. Explanation:** Okay students, Science means understanding nature. {question} is happening all around us daily.")
-            st.write(f"**3. Example:** Example - You can see {question} in your kitchen, garden and school lab.")
-            st.write(f"**4. Formula / Diagram:** For {question}, always draw a neat diagram with labels. Teacher will give full marks!")
-            st.write(f"**5. Why Important:** If you understand {question}, you can become a great scientist!")
-
+            st.write(f"**2. Explanation:** {question} is happening around us in nature. Science helps us understand it.")
+            st.write(f"**3. Example:** You can see {question} in your kitchen, garden, lab.")
+            st.write(f"**4. Diagram:** Draw neat diagram for {question} for full marks.")
         elif subject == "Maths":
-            st.write(f"**1. Definition:** {question} is a mathematical concept to solve problems.")
-            st.write(f"**2. Explanation:** See, Maths is not tough. {question} is like a puzzle. If you know the formula, you can solve any sum in 2 minutes.")
-            st.write(f"**3. Example:** Example - We use {question} in shopping, cricket score and marks calculation.")
-            st.write(f"**4. Formula:** Formula for {question} - Write it 5 times and memorize it!")
-            st.write(f"**5. Exam Tip:** 10 marks question will come from {question}. Practice 3 sums daily!")
-
+            st.write(f"**2. Explanation:** {question} is like a puzzle. If you know formula, you can solve any sum in 2 mins.")
+            st.write(f"**3. Formula:** Note formula for {question} and practice 3 sums daily.")
         elif subject == "English":
-            st.write(f"**1. Definition:** {question} is a concept in English Grammar.")
-            st.write(f"**2. Explanation:** Children, if you learn {question}, you can speak English confidently like your teacher.")
-            st.write(f"**3. Example:** Sentence - 'My teacher taught me {question} very clearly today.'")
-            st.write(f"**4. How to Practice:** Write 3 sentences using {question} daily and read aloud.")
-            st.write(f"**5. Exam Tip:** Good English = Good Job in future!")
+            st.write(f"**2. Explanation:** If you learn {question}, you can speak English confidently.")
+            st.write(f"**3. Example:** Make 2 sentences daily using {question}.")
+        else:
+            st.write(f"**2. Explanation:** {question} tells story of our country and society. Important for becoming good citizen.")
+            st.write(f"**3. Example:** Effect of {question} can be seen in our village today.")
 
-        else: # Social Science
-            st.write(f"**1. Definition:** {question} is an important concept in Social Science.")
-            st.write(f"**2. Explanation:** Dear students, {question} is not just a lesson, it is a story of our country and our ancestors.")
-            st.write(f"**3. Example:** We can see the effect of {question} in our village and society today.")
-            st.write(f"**4. How to Remember:** For {question}, use Map + Year + Story method. Easy to remember!")
-            st.write(f"**5. Exam Tip:** Write point wise with dates for full marks!")
+        st.write(f"**4. Why Important:** {question} is a 5 marks question in exam. Prepare well!")
+        st.write(f"**5. Exam Tip:** Write heading '{question}' neatly, add points and example - Full marks!")
 
-        st.success("Understood? Write this in your notebook 2 times! You will get full marks! ✨")
+        st.success("Understood? Write this 2 times in notebook! You will get full marks! ✨")
