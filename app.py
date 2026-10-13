@@ -1,45 +1,53 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="EduGeni AI", page_icon="🤖", layout="centered")
-st.title("EduGeni - ChatGPT for Students 🤖")
-st.write("Enna doubt kettalum ketkalaam da!")
+st.set_page_config(page_title="EduGeni AI", layout="centered")
+st.title("EduGeni AI")
+st.write("Ask any doubt - ChatGPT style answers")
 
-# SIDEBAR LA KEY KEKKA POROM - SECRETS VENAM!
-st.sidebar.header("🔑 Setup")
-api_key = st.sidebar.text_input("Groq API Key inga paste pannu:", type="password", help="gsk_ nu start aagura key")
-st.sidebar.info("Key illaya? groq.com/keys la free ya edukkalam!")
+# Input for API Key
+api_key = st.text_input("Enter Groq API Key:", type="password", placeholder="gsk_...")
 
-subject = st.sidebar.selectbox("Subject", ["Maths","Science","English","Social Science","Computer Science"])
+# Subject selection
+subject = st.selectbox("Choose Subject", ["General", "Maths", "Science", "English", "Social", "Computer Science"])
 
-q = st.text_input(f"Ungal {subject} doubt ah type pannunga:")
+# Initialize chat history
+if "history" not in st.session_state:
+    st.session_state.history = []
 
-def get_answer(question, subject, key):
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-    data = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {"role": "system", "content": f"You are EduGeni, friendly Tamil+English {subject} teacher for 10th std. Explain simple, with Tamil touch. Format: Definition, Easy Explanation, Example, Exam Tip."},
-            {"role": "user", "content": question}
-        ],
-        "temperature": 0.7
-    }
-    r = requests.post(url, headers=headers, json=data, timeout=30)
-    if r.status_code == 200:
-        return r.json()['choices'][0]['message']['content']
-    else:
-        return f"Error da: {r.text}"
+# Display history
+for chat in st.session_state.history:
+    with st.chat_message(chat["role"]):
+        st.write(chat["content"])
 
-if st.button("Get Answer ✨"):
+# Chat input
+if question := st.chat_input(f"Ask {subject} question..."):
     if not api_key:
-        st.error("Sidebar la Groq API Key paste pannu da Sandhiya!")
-    elif not q:
-        st.warning("Question type pannu da!")
+        st.error("Enter API Key first!")
     else:
-        with st.spinner("ChatGPT maari yosikuthu..."):
-            ans = get_answer(q, subject, api_key)
-            st.success("Answer:")
-            st.markdown(ans)
+        # User message
+        st.session_state.history.append({"role": "user", "content": question})
+        with st.chat_message("user"):
+            st.write(question)
 
-st.caption("Made with ❤️ by Sandhiya | ChatGPT maari working!")
+        # AI response
+        with st.chat_message("assistant"):
+            with st.spinner("Generating answer..."):
+                try:
+                    url = "https://api.groq.com/openai/v1/chat/completions"
+                    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+                    payload = {
+                        "model": "llama-3.3-70b-versatile",
+                        "messages": [
+                            {"role": "system", "content": f"You are a helpful {subject} teacher. Explain clearly in simple English for Class 10 students. Give definition, explanation, example and exam tip."},
+                            {"role": "user", "content": question}
+                        ]
+                    }
+                    response = requests.post(url, headers=headers, json=payload, timeout=30)
+                    result = response.json()
+                    answer = result["choices"][0]["message"]["content"]
+
+                    st.write(answer)
+                    st.session_state.history.append({"role": "assistant", "content": answer})
+                except Exception as e:
+                    st.error(f"Error: {e}")
