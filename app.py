@@ -1,19 +1,16 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 
 st.set_page_config(page_title="EduGeni", page_icon="📚")
 st.title("📚 EduGeni - AI Tutor")
 
-# Configure API Key from Secrets
 try:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception as e:
     st.error(f"API Key Error: {e}")
     st.stop()
 
-# Input
-topic = st.text_input("Enter a topic (e.g., What is inheritance in Java?)")
+topic = st.text_input("Enter a topic")
 
 if st.button("Generate Answer"):
     if not topic:
@@ -21,10 +18,11 @@ if st.button("Generate Answer"):
     else:
         with st.spinner("Generating..."):
             try:
-                response = model.generate_content(topic)
+                response = client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=topic
+                )
                 st.success("Answer Generated!")
                 st.write(response.text)
             except Exception as e:
                 st.error(f"Error: {e}")
-
-st.sidebar.info("Project Summit - EduGeni Ready!")
