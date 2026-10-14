@@ -1,30 +1,30 @@
 import streamlit as st
 import google.generativeai as genai
 
-st.set_page_config(page_title="EduGeni", page_icon="🎓")
-st.title("🎓 EduGeni - Answer Generator")
+st.set_page_config(page_title="EduGeni", page_icon="📚")
+st.title("📚 EduGeni - AI Tutor")
 
+# Configure API Key from Secrets
 try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-    genai.configure(api_key=api_key)
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    model = genai.GenerativeModel("gemini-1.5-flash")
 except Exception as e:
-    st.error(f"Secrets la GEMINI_API_KEY illa da! Error: {e}")
+    st.error(f"API Key Error: {e}")
     st.stop()
 
-subject = st.selectbox("Subject", ["Java", "Python", "Data Structure", "C", "Other"])
-answer_format = st.selectbox("Answer Format", ["Simple Explanation", "Detailed", "Tamil", "Tanglish"])
-question = st.text_area("Enter your question here", placeholder="What is inheritance in java")
+# Input
+topic = st.text_input("Enter a topic (e.g., What is inheritance in Java?)")
 
-if st.button("Generate Answer", type="primary"):
-    if not question.strip():
-        st.warning("Question type pannu da!")
+if st.button("Generate Answer"):
+    if not topic:
+        st.warning("Please enter a topic!")
     else:
         with st.spinner("Generating..."):
             try:
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                prompt = f"Subject: {subject}, Format: {answer_format}, Question: {question}. Give student friendly answer."
-                res = model.generate_content(prompt)
-                st.success("Answer Ready!")
-                st.write(res.text)
+                response = model.generate_content(topic)
+                st.success("Answer Generated!")
+                st.write(response.text)
             except Exception as e:
                 st.error(f"Error: {e}")
+
+st.sidebar.info("Project Summit - EduGeni Ready!")
