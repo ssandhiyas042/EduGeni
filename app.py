@@ -1,16 +1,10 @@
 import streamlit as st
-from google import genai
+import requests
 
 st.set_page_config(page_title="EduGeni", page_icon="📚")
 st.title("📚 EduGeni - AI Tutor")
 
-try:
-    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-except Exception as e:
-    st.error(f"API Key Error: {e}")
-    st.stop()
-
-topic = st.text_input("Enter a topic")
+topic = st.text_input("Enter a topic (e.g., What is inheritance in Java?)")
 
 if st.button("Generate Answer"):
     if not topic:
@@ -18,11 +12,30 @@ if st.button("Generate Answer"):
     else:
         with st.spinner("Generating..."):
             try:
-                response = client.models.generate_content(
-                    model="gemini-2.0-flash",
-                    contents=topic
-                )
-                st.success("Answer Generated!")
-                st.write(response.text)
+                api_key = st.secrets["GEMINI_API_KEY"]
+
+                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+                headers = {
+                    "x-goog-api-key": api_key,
+                    "Content-Type": "application/json"
+                }
+
+                data = {
+                    "contents": [{
+                        "parts": [{"text": topic}]
+                    }]
+                }
+
+                response = requests.post(url, headers=headers, json=data)
+
+                if response.status_code == 200:
+                    result = response.json()
+                    text = result['candidates'][0]['content']['parts'][0]['text']
+                    st.success("Answer Generated!")
+                    st.write(text)
+                else:
+                    st.error(f"Error {response.status_code}: {response.text}")
+
             except Exception as e:
                 st.error(f"Error: {e}")
