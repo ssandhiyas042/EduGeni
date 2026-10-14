@@ -1,85 +1,81 @@
 import streamlit as st
-import requests
+from openai import OpenAI
 
-st.set_page_config(page_title="EduGeni for Students", page_icon="📚", layout="centered")
-st.title("EduGeni - For Students 👩‍🎓")
-st.write("Hello Students! I am your teacher. Ask any doubt from 5 subjects, I will explain clearly!")
+# --- Page Config ---
+st.set_page_config(page_title="EduGenie - Study Buddy", page_icon="🎓", layout="centered")
 
-subject = st.sidebar.selectbox("Choose Your Subject 📚",
-    ["Maths", "Science", "English", "Social Science", "Computer Science"])
+st.title("🎓 EduGenie - Study Buddy")
+st.caption("Your AI-powered study assistant")
 
-st.sidebar.info(f"Subject: {subject}\n\nAsk any question, you will get Definition!")
+# --- Inputs ---
+col1, col2 = st.columns(2)
+with col1:
+    subject = st.selectbox("Select Subject", ["Java", "Python", "Data Structure", "English"])
 
-question = st.text_input(f"Ask your {subject} doubt here:")
+with col2:
+    language = st.selectbox("Select Language", ["Tamil", "English"])
 
-# Function to get real definition from Wikipedia
-def get_wiki_def(topic):
-    try:
-        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic.replace(' ', '_')}"
-        headers = {"User-Agent": "EduGeniApp/1.0"}
-        r = requests.get(url, headers=headers, timeout=5)
-        data = r.json()
-        if "extract" in data and data["extract"]:
-            return data["extract"]
-    except:
-        return None
-    return None
+answer_type = st.selectbox("Answer Format", ["Simple Explanation", "2-Mark", "5-Mark", "10-Mark"])
 
-# Local strong knowledge for important topics
-local_db = {
-    "types of noun": "**Noun - 5 Types:** 1) Proper Noun (specific name - Ram, Delhi) 2) Common Noun (general - boy, city) 3) Collective Noun (group - team, family) 4) Abstract Noun (feeling - honesty, love) 5) Material Noun (material - gold, water). Example: Ram is a boy with honesty.",
-    "noun": "**Noun:** Naming word. Name of person, place, animal, thing. Types: Proper, Common, Collective, Abstract, Material.",
-    "verb": "**Verb:** Action word. Eg: eat, sleep, run, write. Types: Main verb, Helping verb (is, am, are, was, were).",
-    "tense": "**Tense:** Tells time of action. 3 types: Present (I eat), Past (I ate), Future (I will eat). Each has Simple, Continuous, Perfect, Perfect Continuous.",
-    "photosynthesis": "**Photosynthesis:** Process where green plants make food using Sunlight, CO2, Water. Formula: CO2 + Water + Sunlight -> Glucose + Oxygen. Happens in chloroplast of leaf.",
-    "python": "**Python:** High-level easy programming language invented by Guido van Rossum. Used in YouTube, Instagram, AI. Code: print('Hello')",
-}
+question = st.text_area("Enter your question here", placeholder="Ex: What is inheritance in Java?")
 
-if st.button("Get Answer From Teacher 👩‍🏫"):
-    if not question:
-        st.warning("Please enter a question!")
+# --- Session State for Loop Fix ---
+if "final_answer" not in st.session_state:
+    st.session_state.final_answer = ""
+
+# --- Core Function with Correct Prompt ---
+def generate_answer(question, subject, language, answer_type):
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+    system_instruction = """
+    You are an expert teacher for college students.
+    You must give accurate, correct, and specific answers.
+    NEVER repeat the user's question as the definition.
+    ALWAYS give real definition, syntax, example code if subject is Java/Python/Data Structure.
+    Do not give generic tips like 'write 2 times' or 'very important for exams'.
+    If user spelling is wrong, auto-correct and answer correctly.
+    """
+
+    user_prompt = f"""
+    Subject: {subject}
+    Language: {language}
+    Required Answer Format: {answer_type}
+    Student Question: {question}
+
+    Instructions:
+    - Answer in {language} language only.
+    - If subject is Java/Python/Data Structure, provide definition, syntax, and example program.
+    - If subject is English, provide grammar, definition and examples.
+    - Keep answer according to {answer_type} format.
+    """
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        temperature=0.2,
+        messages=[
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": user_prompt}
+        ]
+    )
+    return response.choices[0].message.content
+
+# --- Generate Button Logic ---
+if st.button("Generate Answer", use_container_width=True, type="primary"):
+    if not question.strip():
+        st.warning("Please enter a question first!")
     else:
-        st.balloons()
-        q_low = question.lower().strip()
-        st.subheader(f"Okay class, let's learn {question} in {subject}!")
+        with st.spinner("Generating correct answer..."):
+            try:
+                st.session_state.final_answer = generate_answer(question, subject, language, answer_type)
+            except Exception as e:
+                st.error(f"Error occurred: {e}")
 
-        answer_found = None
-
-        # 1. Check local db first
-        for key in local_db:
-            if key in q_low or q_low in key:
-                answer_found = local_db[key]
-                break
-
-        # 2. If not in local, get from Wikipedia
-        if not answer_found:
-            wiki = get_wiki_def(question)
-            if wiki:
-                answer_found = wiki
-            else:
-                answer_found = f"{question} is a very important concept in {subject}. It is widely used and very important for exams."
-
-        st.write(f"**1. Definition:** {answer_found}")
-
-        # Teacher style explanation for all 5 subjects
-        if subject == "Computer Science":
-            st.write(f"**2. Explanation:** Children, {question} helps computer to work smarter. It is like brain for computer.")
-            st.write(f"**3. Example Code:** Try small program for {question} and run it.")
-        elif subject == "Science":
-            st.write(f"**2. Explanation:** {question} is happening around us in nature. Science helps us understand it.")
-            st.write(f"**3. Example:** You can see {question} in your kitchen, garden, lab.")
-            st.write(f"**4. Diagram:** Draw neat diagram for {question} for full marks.")
-        elif subject == "Maths":
-            st.write(f"**2. Explanation:** {question} is like a puzzle. If you know formula, you can solve any sum in 2 mins.")
-            st.write(f"**3. Formula:** Note formula for {question} and practice 3 sums daily.")
-        elif subject == "English":
-            st.write(f"**2. Explanation:** If you learn {question}, you can speak English confidently.")
-            st.write(f"**3. Example:** Make 2 sentences daily using {question}.")
-        else:
-            st.write(f"**2. Explanation:** {question} tells story of our country and society. Important for becoming good citizen.")
-            st.write(f"**3. Example:** Effect of {question} can be seen in our village today.")
-
-        st.write(f"**4. Why Important:** {question} is a 5 marks question in exam. Prepare well!")
-        st.write(f"**5. Exam Tip:** Write heading '{question}' neatly, add points and example - Full marks!")
-
-        st.success("Understood? Write this 2 times in notebook! You will get full marks! ✨")
+# --- Display Answer ---
+if st.session_state.final_answer:
+    st.divider()
+    st.subheader("Answer:")
+    st.markdown(st.session_state.final_answer)
+    st.divider()
+    if st.button("Clear Answer"):
+        st.session_state.final_answer = ""
+        st.rerun()
